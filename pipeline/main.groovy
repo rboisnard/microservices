@@ -2,8 +2,7 @@ def call() {
   def build_version = "unknown"
 
   stage("version") {
-    echo "TODO: implement build versions"
-    
+    // TODO: implement build versions
     if (is_pull_request()) {
       build_version = "PR" + env.CHANGE_ID + "." + env.BUILD_NUMBER
     }
@@ -14,22 +13,21 @@ def call() {
   }
 
   stage("images") {
-    def config = readYaml file: 'images/config.yml'
-    echo "TODO: implement multi arch"
-    for (image in config.images) {
-      for (arch in image.archs) {
-        if (arch == "armv7") {
-          echo "build ${image.name}/${arch} version ${build_version}"
-          sh """
-            docker build                                \
-              -t ${image.name}/${arch}:${build_version} \
-              --build-arg version="${build_version}"    \
-              --build-arg arch="${arch}"                \
-              -f images/Dockerfile.${image.name}        \
-              images/
-          """
-        }
-      }
+    // TODO: run in different nodes for arm and x86
+    echo "create image to use docker-compose"
+    def docker_id = sh(
+      script: "getent group docker | awk -F: '{print \$3}'",
+      returnStdout: true
+    ).trim()
+
+    def compose = docker.build("usvc_compose",
+        "-f images/Dockerfile.compose images/"
+      + " --build-arg docker_id=${docker_id}")
+
+    compose.inside("-v /var/run/docker.sock:/var/run/docker.sock --group-add docker") {
+      sh """
+        docker-compose -f images/docker-compose.armv7.yaml -p usvc build
+      """
     }
   }
 }

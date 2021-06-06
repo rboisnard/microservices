@@ -1,0 +1,9 @@
+#syntax=docker/dockerfile:1.2
+
+FROM usvc_run
+
+RUN    apk update   \
+    && apk add      \
+        build-base  \
+        clang       \
+        cmake

@@ -1,0 +1,19 @@
+---
+version: "3.7"
+services:
+  base:
+    build:
+      context: .
+      dockerfile: Dockerfile.base
+  run:
+    build:
+      context: .
+      dockerfile: Dockerfile.run
+  ops:
+    build:
+      context: .
+      dockerfile: Dockerfile.ops
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
