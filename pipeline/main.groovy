@@ -11,9 +11,9 @@ def build_images(String composefile) {
 
   compose.inside("-v /var/run/docker.sock:/var/run/docker.sock --group-add docker") {
     sh """
-      ls -l /var/run/docker.sock
-      ls -l /var/jenkins_home/workspace/
-      ls -l /var/jenkins_home/workspace/*
+      #ls -l /var/run/docker.sock
+      #ls -l /var/jenkins_home/workspace/
+      #ls -l /var/jenkins_home/workspace/*
       docker-compose -f images/${composefile} -p usvc build
     """
   }
@@ -36,11 +36,23 @@ def call() {
   stage("images") {
     // TODO: run in different nodes for arm and x86
     stash name: "repo"
-    build_images("docker-compose.armv7.yaml")
-    node("x86_slave") {
-      unstash "repo"
-      build_images("docker-compose.x86_64.yaml")
+
+    def image_nodes = [:]
+
+    image_nodes["x86"] = {
+      node("x86_slave") {
+        unstash "repo"
+        sh "docker-compose -f images/docker-compose.x86_64.yaml -p usvc build"
+      }
     }
+    image_nodes["arm"] = {
+      node("arm_slave") {
+        unstash "repo"
+        sh "docker-compose -f images/docker-compose.armv7.yaml -p usvc build"
+      }
+    }
+
+    parallel(image_nodes)
   }
 }
 return this
